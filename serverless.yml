@@ -1,11 +1,11 @@
 service: collaborationEngine
 
-profile: colab
+profile: liquid
 
 custom:
   output:
     file: ./client/data.json
-  stage: ${opt:stage, 'dev'}
+  stage: ${opt:stage, 'lab'}
   webpack:
     webpackConfig: ./webpack.config.js
     includeModules: true
@@ -16,6 +16,7 @@ plugins:
 provider:
   name: aws
   runtime: nodejs12.x
+  region: us-east-2
   apiGateway:
     minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
   environment:
