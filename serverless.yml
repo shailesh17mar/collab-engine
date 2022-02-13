@@ -1,5 +1,4 @@
-service:
-  name: yjs-socket-service
+service: collaborationEngine
 
 profile: colab
 
@@ -22,19 +21,17 @@ provider:
   environment:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
 
-  
-
 environment:
-    APIG_ENDPOINT:
-      Fn::Join:
-        - ''
-        - - Ref: WebsocketsApi
-          - .execute-api.
-          - Ref: AWS::Region
-          - .amazonaws.com/
-          - ${self:custom.stage}
-    CONNECTIONS_TABLE:
-      Ref: ConnectionsTable
+  APIG_ENDPOINT:
+    Fn::Join:
+      - ""
+      - - Ref: WebsocketsApi
+        - .execute-api.
+        - Ref: AWS::Region
+        - .amazonaws.com/
+        - ${self:custom.stage}
+  CONNECTIONS_TABLE:
+    Ref: ConnectionsTable
 
 iamRoleStatements:
   - Effect: Allow
@@ -58,7 +55,7 @@ functions:
           # Only the '$connect' route supports an authorizer. The other routes
           # are secured via the connection ID and therefore it should be handled
           # like a session ID.
-          
+
       - websocket:
           # Route messages here if '$request.body.action' is 'routeA'.
           # You can adjust which property to use for routing by adjusting
@@ -70,7 +67,6 @@ functions:
       - websocket:
           # Handles disconnect messages
           route: $disconnect
-
 
 resources:
   Resources:

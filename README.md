@@ -1,38 +1,20 @@
-# y-serverless
+# Serverless API
 
- Serverless Provider using Websockets and DynamoDB for YJS. Easy deploy. Written in typescript.
+Get a Typescript Node.js API in just a few minutes.
 
- Huge shout out to [gaberogan](https://github.com/gaberogan/y-websocket-api/) original repo. 
+Use this template with the [serverless](https://www.serverless.com/framework/docs/providers/aws/cli-reference/create/) framework and get up and running with a basic API in just a few minutes.
 
- Open limitations:
+You can swap our KoaJS for Express, or any other standard node.js library by tweaking the handler and wrapping it using that library.
 
- 1. Doesn't work with regular `y-websockets`. AWS sockets requires base64 strings. You need a modifided sockets provider from the client repo to pass b64 strings
+### API Setup
 
- 2. Not optimized yet, so may create more clients and data than necessary
+Using this template
+```
+serverless create --template-url https://github.com/rlingineni/serverless-api
+```
 
-
- ## Setup
-
-
- ### Testing Locally
- ```
- cd api
-npm install
+#### Testing Locally
+Starts a local server at `localhost:8000`
+```bash
 npm run start
- ```
-
- Spins up a local server on `ws://localhost:5000`
-
-### Deploy to AWS
 ```
-cd api
-serverless deploy
-```
-
-### See Logs
-```
-serverless logs -f api
-```
-
-### Resources
-Creates a DynamoDB table to maintain documents and connection information.

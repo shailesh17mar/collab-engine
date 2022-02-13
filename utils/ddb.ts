@@ -1,45 +1,46 @@
-const AWS = require('aws-sdk');
+const AWS = require("aws-sdk");
 
 AWS.config.update({
-  region: 'us-east-1',
+  region: "us-east-1",
 });
 
-
-
 export class DDBHelper {
+  TABLE_NAME = "";
+  PrimaryKeyName = "";
+  SecondaryKeyName = "";
 
-    TABLE_NAME = '';
-    PrimaryKeyName = '';
-    SecondaryKeyName = '';
+  docClient = new AWS.DynamoDB.DocumentClient();
 
-    docClient = new AWS.DynamoDB.DocumentClient();
+  constructor(helperOptions: {
+    tableName: string;
+    primaryKeyName: string;
+    secondaryKeyName?: string;
+  }) {
+    const { tableName, primaryKeyName, secondaryKeyName } = helperOptions;
+    this.TABLE_NAME = tableName;
+    this.PrimaryKeyName = primaryKeyName;
+    this.SecondaryKeyName = secondaryKeyName;
+  }
 
-    constructor(helperOptions:{tableName:string, primaryKeyName:string, secondaryKeyName?:string}){
-      const {tableName, primaryKeyName, secondaryKeyName} = helperOptions;
-      this.TABLE_NAME = tableName;
-      this.PrimaryKeyName = primaryKeyName;
-      this.SecondaryKeyName = secondaryKeyName;
-    }
+  updateTableName(name: string) {
+    this.TABLE_NAME = name;
+  }
 
-    updateTableName(name:string) {
-          this.TABLE_NAME= name;
-    }
-
-  getRelationFromKey(key: string, startIndex:number = 0): { name: string; id?: string } {
-    if (key.includes('#')) {
+  getRelationFromKey(
+    key: string,
+    startIndex: number = 0
+  ): { name: string; id?: string } {
+    if (key.includes("#")) {
       return {
-        name: key.split('#')[startIndex],
-        id: key.split('#')[startIndex+1],
+        name: key.split("#")[startIndex],
+        id: key.split("#")[startIndex + 1],
       };
     }
     return { name: key };
   }
 
-   generateLookupKey(
-    primaryKeyValue: string,
-    secondaryKeyValue?: string,
-  ) {
-    const {PrimaryKeyName, SecondaryKeyName} = this;
+  generateLookupKey(primaryKeyValue: string, secondaryKeyValue?: string) {
+    const { PrimaryKeyName, SecondaryKeyName } = this;
     const key = {};
     key[PrimaryKeyName] = primaryKeyValue;
     if (secondaryKeyValue) {
@@ -49,14 +50,13 @@ export class DDBHelper {
     return key;
   }
 
-   async createItem(
+  async createItem(
     primaryKeyValue: string,
     data: any,
     secondaryKeyValue?: string,
-    doNotCreateIfExists?: boolean,
+    doNotCreateIfExists?: boolean
   ) {
-
-    const {PrimaryKeyName, SecondaryKeyName, TABLE_NAME, docClient} = this;
+    const { PrimaryKeyName, SecondaryKeyName, TABLE_NAME, docClient } = this;
     const key = this.generateLookupKey(primaryKeyValue, secondaryKeyValue);
 
     const updateParams = {
@@ -71,21 +71,21 @@ export class DDBHelper {
       let expression = `#p <> :pk`;
 
       const attributeNames = {
-        '#p': PrimaryKeyName,
+        "#p": PrimaryKeyName,
       };
       const attributeValues = {
-        ':pk': primaryKeyValue,
+        ":pk": primaryKeyValue,
       };
 
       if (secondaryKeyValue) {
         expression += ` AND #s <> :sk`;
-        attributeNames['#s'] = SecondaryKeyName;
-        attributeValues[':sk'] = secondaryKeyValue;
+        attributeNames["#s"] = SecondaryKeyName;
+        attributeValues[":sk"] = secondaryKeyValue;
       }
 
-      updateParams['ExpressionAttributeNames'] = attributeNames;
-      updateParams['ConditionExpression'] = expression;
-      updateParams['ExpressionAttributeValues'] = attributeValues;
+      updateParams["ExpressionAttributeNames"] = attributeNames;
+      updateParams["ConditionExpression"] = expression;
+      updateParams["ExpressionAttributeValues"] = attributeValues;
     }
 
     try {
@@ -99,21 +99,17 @@ export class DDBHelper {
 
   /**
    * Deletes an item from the table
-   * @param primaryKeyValue 
-   * @param secondaryKeyValue 
-   * @returns 
+   * @param primaryKeyValue
+   * @param secondaryKeyValue
+   * @returns
    */
-  async deleteItem(
-    primaryKeyValue: string,
-    secondaryKeyValue?: string,
-  ) {
-
-    const {TABLE_NAME, docClient} = this;
+  async deleteItem(primaryKeyValue: string, secondaryKeyValue?: string) {
+    const { TABLE_NAME, docClient } = this;
     const key = this.generateLookupKey(primaryKeyValue, secondaryKeyValue);
 
     const deleteParams = {
       TableName: TABLE_NAME,
-      Key:key
+      Key: key,
     };
 
     try {
@@ -134,17 +130,17 @@ export class DDBHelper {
    * @param _doNotCreateColumn - Internal param. Do not use. Override column creation
    * Updates a map column value to hold a new key value pair, and creates if not exists
    */
-   async setKeyInColumn(
+  async setKeyInColumn(
     primaryKeyValue: string,
     colName: string,
     key: string,
     value: any,
-    _doNotCreateColumn?: boolean,
+    _doNotCreateColumn?: boolean
   ) {
-    const {docClient} = this;
+    const { docClient } = this;
     const obj = {};
     obj[key] = value;
-    const {TABLE_NAME} = this;
+    const { TABLE_NAME } = this;
 
     const ConditionExpression = _doNotCreateColumn
       ? undefined
@@ -159,10 +155,10 @@ export class DDBHelper {
         Key: this.generateLookupKey(primaryKeyValue),
         UpdateExpression,
         ExpressionAttributeValues: {
-          ':keyval': AttributeValue,
+          ":keyval": AttributeValue,
         },
         ConditionExpression,
-        ReturnValues: 'ALL_NEW',
+        ReturnValues: "ALL_NEW",
       };
       const resp = await docClient.update(updateParams).promise();
 
@@ -170,45 +166,46 @@ export class DDBHelper {
         return resp[colName];
       }
     } catch (ex) {
-      if (ex.code === 'ConditionalCheckFailedException') {
+      if (ex.code === "ConditionalCheckFailedException") {
         return this.setKeyInColumn(primaryKeyValue, colName, key, value, true);
       }
-      console.log('Failed to Update Column in DynamoDB');
+      console.log("Failed to Update Column in DynamoDB");
       console.log(ex);
       return undefined;
     }
   }
 
-    /**
+  /**
    * Get all items that are related to a certain primary key
    * */
-   async queryItemByKey<T>(
+  async queryItemByKey<T>(
     primaryKeyValue: string,
-    indexOpts?:{
-      indexName: string,
-      indexKeyName:string;
+    indexOpts?: {
+      indexName: string;
+      indexKeyName: string;
     }
-    
-
   ): Promise<T[] | undefined> {
-    const {docClient, TABLE_NAME, PrimaryKeyName} = this;
-    
- 
+    const { docClient, TABLE_NAME, PrimaryKeyName } = this;
+
+    console.log(
+      "oye",
+      primaryKeyValue,
+      indexOpts?.indexKeyName || PrimaryKeyName
+    );
     const queryParams: any = {
       TableName: TABLE_NAME,
-      KeyConditionExpression: '#p = :pk',
+      KeyConditionExpression: "#p = :pk",
       ExpressionAttributeNames: {
-        '#p': indexOpts?.indexKeyName || PrimaryKeyName,
+        "#p": indexOpts?.indexKeyName || PrimaryKeyName,
       },
       ExpressionAttributeValues: {
-        ':pk': primaryKeyValue,
+        ":pk": primaryKeyValue,
       },
     };
 
-    if(indexOpts){
+    if (indexOpts) {
       queryParams.IndexName = indexOpts.indexName;
     }
-
 
     try {
       const resp = await docClient.query(queryParams).promise();
@@ -217,7 +214,7 @@ export class DDBHelper {
       }
       return undefined;
     } catch (ex) {
-      console.log('Getting Item Failed');
+      console.log("Getting Item Failed");
       console.log(ex);
       return undefined;
     }
@@ -226,8 +223,11 @@ export class DDBHelper {
   /**
    * Get an entire item from the database
    */
-   async getItem<T>(primaryKeyValue: string, secondaryKeyValue?: string):Promise<T | undefined> {
-    const {TABLE_NAME, docClient} = this;
+  async getItem<T>(
+    primaryKeyValue: string,
+    secondaryKeyValue?: string
+  ): Promise<T | undefined> {
+    const { TABLE_NAME, docClient } = this;
     const getParams = {
       TableName: TABLE_NAME,
       Key: this.generateLookupKey(primaryKeyValue, secondaryKeyValue),
@@ -240,7 +240,7 @@ export class DDBHelper {
       }
       return undefined;
     } catch (ex) {
-      console.log('Getting Item Failed');
+      console.log("Getting Item Failed");
       console.log(ex);
       return undefined;
     }
@@ -249,10 +249,10 @@ export class DDBHelper {
   /**
    * Get a subkey from
    * */
-   async getKeyFromColumn(
+  async getKeyFromColumn(
     primaryKeyValue: string,
     colName: string,
-    key: string,
+    key: string
   ): Promise<any | undefined> {
     // get the value of the column,
     const item = await this.getItem(primaryKeyValue);
@@ -271,12 +271,12 @@ export class DDBHelper {
     attributeName: string,
     value: any,
     secondaryKeyValue?: string,
-    options?:{appendToList?:boolean}
+    options?: { appendToList?: boolean }
   ): Promise<any | undefined> {
-    const { TABLE_NAME, docClient} = this;
-    let UpdateExpression =`SET ${attributeName} = :details`;
+    const { TABLE_NAME, docClient } = this;
+    let UpdateExpression = `SET ${attributeName} = :details`;
 
-    if(options && options.appendToList){
+    if (options && options.appendToList) {
       UpdateExpression = `SET ${attributeName} = list_append(${attributeName}, :details)`;
     }
 
@@ -285,9 +285,9 @@ export class DDBHelper {
       Key: this.generateLookupKey(primaryKeyValue, secondaryKeyValue),
       UpdateExpression,
       ExpressionAttributeValues: {
-        ':details': value,
+        ":details": value,
       },
-      ReturnValues: 'ALL_NEW',
+      ReturnValues: "ALL_NEW",
     };
 
     try {
@@ -297,7 +297,7 @@ export class DDBHelper {
       }
       return undefined;
     } catch (ex) {
-      console.log('Updating Item Failed');
+      console.log("Updating Item Failed");
       console.log(ex);
       return undefined;
     }
@@ -306,18 +306,18 @@ export class DDBHelper {
   /**
    * Use to delete a sub property on an item
    * */
-   async deleteKeyInColumn(
+  async deleteKeyInColumn(
     primaryKeyValue: string,
     colName: string,
-    secondaryKeyValue?: string,
+    secondaryKeyValue?: string
   ): Promise<boolean> {
-    const {TABLE_NAME, docClient} = this;
+    const { TABLE_NAME, docClient } = this;
     const deleteParams = {
       TableName: TABLE_NAME,
       Key: this.generateLookupKey(primaryKeyValue, secondaryKeyValue),
       UpdateExpression: `REMOVE #c`,
       ExpressionAttributeNames: {
-        '#c': colName,
+        "#c": colName,
       },
     };
 
@@ -325,7 +325,7 @@ export class DDBHelper {
       await docClient.update(deleteParams).promise();
       return true;
     } catch (ex) {
-      console.log('Deleting Item Failed');
+      console.log("Deleting Item Failed");
       console.log(ex);
       return false;
     }
