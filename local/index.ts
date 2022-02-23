@@ -1,9 +1,17 @@
+import * as express from "express";
+import * as http from "http";
 import * as WebSocket from "ws";
 import YSockets from "../helpers/ysockets";
 import { toBase64, fromBase64 } from "lib0/buffer";
 const queryString = require("query-string");
 
-const wss = new WebSocket.Server({ port: 8000 });
+const app = express();
+app.get("/", (req, res) => {
+  res.sendStatus(200);
+});
+
+// const server = http.createServer(app);
+const wss = new WebSocket.Server({ noServer: true });
 
 const ySockets = new YSockets();
 
@@ -20,15 +28,14 @@ wss.on("connection", (ws, req) => {
 
   const clientName = queryString.parse(req.url)["?name"];
   const docName = queryString.parse(req.url)["/?"];
-  console.log("sss", req.url, docName, clientName);
   connectedClients[clientName] = ws;
 
   ySockets.onConnection(clientName, docName);
 
   ws.on("message", (message) => {
-    console.log(message.toString());
+    // console.log(message.toString());
     // message is b64 string
-    //console.log(`Received message => ${fromBase64(message.toString())}`)
+    // console.log(`Received message => ${fromBase64(message.toString())}`);
     ySockets.onMessage(clientName, message.toString(), sendToClient);
     //ws.send(`Sent updates to peers`)
     console.log("Sending updates to peers");
@@ -43,4 +50,10 @@ wss.on("close", (ws, req) => {
   //ws.send('Disconnected from Server')
 });
 
-console.log("Listening on ws://localhost:5000");
+//start our server
+const server = app.listen(5000);
+server.on("upgrade", (request, socket, head) => {
+  wss.handleUpgrade(request, socket, head, (socket) => {
+    wss.emit("connection", socket, request);
+  });
+});

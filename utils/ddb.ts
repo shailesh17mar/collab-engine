@@ -1,7 +1,7 @@
 const AWS = require("aws-sdk");
 
 AWS.config.update({
-  region: "us-east-1",
+  region: "us-east-2",
 });
 
 export class DDBHelper {
@@ -92,6 +92,7 @@ export class DDBHelper {
       await docClient.put(updateParams).promise();
       return true;
     } catch (ex) {
+      console.log("creation failed");
       console.log(ex);
       return false;
     }
@@ -116,6 +117,7 @@ export class DDBHelper {
       await docClient.delete(deleteParams).promise();
       return true;
     } catch (ex) {
+      console.log("deletion failed");
       console.log(ex);
       return false;
     }
@@ -214,7 +216,7 @@ export class DDBHelper {
       }
       return undefined;
     } catch (ex) {
-      console.log("Getting Item Failed");
+      console.log("Getting Item Failed in query");
       console.log(ex);
       return undefined;
     }
@@ -241,7 +243,7 @@ export class DDBHelper {
       return undefined;
     } catch (ex) {
       console.log("Getting Item Failed");
-      console.log(ex);
+      // console.log(ex);
       return undefined;
     }
   }

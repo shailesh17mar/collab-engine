@@ -1,7 +1,8 @@
 import { DDBHelper } from "../utils/ddb";
 import * as Y from "yjs";
 
-import { toBase64 } from "lib0/buffer";
+import { fromBase64, toBase64 } from "lib0/buffer";
+// import { prosemirrorJSONToYDoc, yDocToProsemirrorJSON } from "y-prosemirror";
 
 interface ConnectionItem {
   PartitionKey: string;
@@ -19,7 +20,7 @@ export class ConnectionsTableHelper {
   private DatabaseHelper: DDBHelper;
   constructor() {
     this.DatabaseHelper = new DDBHelper({
-      tableName: "YConnectionsTable",
+      tableName: process.env.Y_CONNECTIONS_TABLE_NAME,
       primaryKeyName: "PartitionKey",
     });
   }
@@ -40,8 +41,13 @@ export class ConnectionsTableHelper {
     }
 
     if (!connections || connections.length === 0) {
-      await this.removeConnection(id);
-      throw undefined;
+      try {
+        await this.removeConnection(id);
+      } catch (error) {
+        console.log(error);
+
+        throw error;
+      }
     }
 
     return undefined;
@@ -93,7 +99,6 @@ export class ConnectionsTableHelper {
   }
 
   async updateDoc(docName: string, update: string) {
-    console.log(update);
     return await this.DatabaseHelper.updateItemAttribute(
       docName,
       "Updates",
