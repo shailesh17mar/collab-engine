@@ -6,6 +6,7 @@ import * as decoding from "lib0/decoding";
 import { toBase64, fromBase64 } from "lib0/buffer";
 
 import * as Y from "yjs";
+import { gzipSync } from "zlib";
 
 const messageSync = 0;
 const messageAwareness = 1;
@@ -36,12 +37,10 @@ export class YSockets {
 
   async onMessage(
     connectionId: string,
-    b64Message: string,
-    send: (id: string, b64Message: string) => Promise<void>
+    messageArray: Uint8Array,
+    send: (id: string, message: Uint8Array) => Promise<void>
   ) {
     const { ct } = this;
-
-    let messageArray = fromBase64(b64Message);
 
     const docName = (await ct.getConnection(connectionId)).DocName;
     const connectionIds = await ct.getConnectionIds(docName);
@@ -51,7 +50,7 @@ export class YSockets {
     const broadcast = (message: Uint8Array) => {
       return Promise.all(
         otherConnectionIds.map((id) => {
-          return send(id, toBase64(message));
+          return send(id, message);
         })
       );
     };
@@ -81,14 +80,27 @@ export class YSockets {
             const update = decoding.readVarUint8Array(decoder);
             Y.applyUpdate(doc, update);
             await broadcast(messageArray);
-            await ct.updateDoc(docName, toBase64(update));
+            const dbUpdate = toBase64(update);
+            console.log(
+              `total size (uncompressed): ~${Math.round(
+                dbUpdate.length / 1024
+              )} KB`
+            );
+            const compressed = gzipSync(toBase64(update));
+            console.log(
+              `total size (compressed): ~${Math.round(
+                compressed.length / 1024
+              )} KB`
+            );
+            //setup compression
+            await ct.updateDocV2(docName, compressed);
             break;
           default:
             throw new Error("Unknown message type");
         }
 
         if (encoding.length(encoder) > 1) {
-          await send(connectionId, toBase64(encoding.toUint8Array(encoder)));
+          await send(connectionId, encoding.toUint8Array(encoder));
         }
         break;
       case messageAwareness: {

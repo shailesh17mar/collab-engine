@@ -2,6 +2,7 @@ import { DDBHelper } from "../utils/ddb";
 import * as Y from "yjs";
 
 import { fromBase64, toBase64 } from "lib0/buffer";
+import { last } from "lib0/array";
 // import { prosemirrorJSONToYDoc, yDocToProsemirrorJSON } from "y-prosemirror";
 
 interface ConnectionItem {
@@ -13,14 +14,15 @@ interface ConnectionItem {
 
 interface DocumentItem {
   PartitionKey: string;
-  Updates: { S: string }[];
+  Doc: Buffer;
 }
 
 export class ConnectionsTableHelper {
   private DatabaseHelper: DDBHelper;
   constructor() {
     this.DatabaseHelper = new DDBHelper({
-      tableName: process.env.Y_CONNECTIONS_TABLE_NAME,
+      // tableName: "doc-engine-test-collab-engine-YConnectionsTable",
+      tableName: "YConnectionsTable",
       primaryKeyName: "PartitionKey",
     });
   }
@@ -73,7 +75,7 @@ export class ConnectionsTableHelper {
     );
 
     let dbDoc = {
-      Updates: [],
+      Doc: Buffer.from([]),
     };
     if (existingDoc) {
       dbDoc = existingDoc;
@@ -82,20 +84,49 @@ export class ConnectionsTableHelper {
     }
 
     // convert updates to an encoded array
-    const updates = dbDoc.Updates.map(
-      (update) => new Uint8Array(Buffer.from(update, "base64"))
-    );
+    const lastUpdate = new Uint8Array(dbDoc.Doc);
 
     const ydoc = new Y.Doc();
-    for (const update of updates) {
-      try {
-        Y.applyUpdate(ydoc, update);
-      } catch (ex) {
-        console.log("Something went wrong with applying the update");
-      }
+    try {
+      Y.applyUpdate(ydoc, lastUpdate);
+    } catch (ex) {
+      console.log("Something went wrong with applying the update");
     }
 
     return ydoc;
+  }
+
+  async updateDocV2(docName: string, update: Buffer) {
+    await this.DatabaseHelper.updateItemAttribute(
+      docName,
+      "Doc",
+      update,
+      undefined
+    );
+    const existingDoc = await this.DatabaseHelper.getItem<DocumentItem>(
+      docName
+    );
+
+    let dbDoc = {
+      Doc: update,
+    };
+    if (existingDoc) {
+      dbDoc = existingDoc;
+    } else {
+      await this.DatabaseHelper.createItem(docName, dbDoc, undefined, true);
+    }
+
+    const lastUpdate = new Uint8Array(update);
+    // const oldUpdates = dbDoc.Updates.map(update => new Uint8Array(Buffer.from(update, 'base64')))
+
+    // merge updates into one large update
+    const mergedUpdate = Y.mergeUpdates([lastUpdate, update]);
+
+    return await this.DatabaseHelper.updateItemAttributeV2(
+      docName,
+      "Doc",
+      mergedUpdate
+    );
   }
 
   async updateDoc(docName: string, update: string) {

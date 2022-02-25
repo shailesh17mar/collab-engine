@@ -4,6 +4,7 @@ RUN mkdir -p /app/node_modules && chown -R node:node /app
 # RUN chown -R node:node /app
 WORKDIR /app
 COPY package*.json ./
+COPY tsconfig*.json ./
 COPY yarn.lock ./
 # RUN npm install -g yarn
 # RUN npm config set unsafe-perm true
@@ -23,10 +24,10 @@ RUN mkdir -p /app/node_modules && chown -R node:node /app
 WORKDIR //app
 COPY package*.json ./
 COPY yarn.lock ./
+COPY tsconfig*.json ./
 USER node
 RUN yarn install 
 COPY --from=builder /app/lib ./lib
-
 
 EXPOSE 5000
 CMD [ "yarn", "serve" ]

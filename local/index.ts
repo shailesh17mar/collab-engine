@@ -19,9 +19,9 @@ const connectedClients = {};
 
 wss.on("connection", (ws, req) => {
   ws.binaryType = "arraybuffer";
-  const sendToClient = async (name: string, b64Message: string) => {
+  const sendToClient = async (name: string, message: Uint8Array) => {
     if (connectedClients[name]) {
-      connectedClients[name].send(b64Message);
+      connectedClients[name].send(message);
       console.log("Broadcasting Message to peers");
     }
   };
@@ -36,7 +36,8 @@ wss.on("connection", (ws, req) => {
     // console.log(message.toString());
     // message is b64 string
     // console.log(`Received message => ${fromBase64(message.toString())}`);
-    ySockets.onMessage(clientName, message.toString(), sendToClient);
+    //@ts-ignore
+    ySockets.onMessage(clientName, new Uint8Array(message), sendToClient);
     //ws.send(`Sent updates to peers`)
     console.log("Sending updates to peers");
   });

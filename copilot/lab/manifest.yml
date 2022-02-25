@@ -1,9 +1,9 @@
-# The manifest for the "collab-engine" service.
+# The manifest for the "lab" service.
 # Read the full specification for the "Load Balanced Web Service" type at:
 #  https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/
 
 # Your service name will be used in naming your resources like log groups, ECS services, etc.
-name: collab-engine
+name: lab
 type: Load Balanced Web Service
 
 # Distribute traffic to your service.
@@ -29,13 +29,14 @@ exec: true # Enable running commands in your container.
 
 # Optional fields for more advanced use-cases.
 #
-#variables:                    # Pass environment variables as key value pairs.
-#  LOG_LEVEL: info
+variables:
+  REDIS_HOST: ydo-re-1m2vmcv4x8s62.kno3tg.0001.use2.cache.amazonaws.com
+  REDIS_PORT: 6379
 
 #secrets:                      # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
 #  GITHUB_TOKEN: GITHUB_TOKEN  # The key is the name of the environment variable, the value is the name of the SSM parameter.
 
 # You can override any of the values defined above by environment.
-#environments:
-#  test:
-#    count: 2               # Number of tasks to run for the "test" environment.
+environments:
+  lab:
+    count: 1 # Number of tasks to run for the "test" environment.

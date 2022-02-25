@@ -4,13 +4,17 @@
   "description": "Serverless webpack example using Typescript",
   "main": "handler.js",
   "scripts": {
-    "start": "tsc --project tsconfig.local.json && node lib/local/index.js",
+    "start": " tsc --project tsconfig.local.json && node lib/local/main.js",
     "build": "tsc --project tsconfig.local.json",
-    "serve": "node lib/local/index.js"
+    "serve": "node lib/local/main.js"
   },
   "dependencies": {
+    "@hocuspocus/extension-logger": "^1.0.0-alpha.69",
+    "@hocuspocus/extension-redis": "^1.0.0-alpha.58",
+    "@hocuspocus/server": "^1.0.0-alpha.95",
     "@types/ws": "^8.2.2",
     "aws-sdk": "^2.1073.0",
+    "debounce": "^1.2.1",
     "express": "^4.17.3",
     "global": "^4.4.0",
     "lib0": "^0.2.43",

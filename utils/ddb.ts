@@ -1,3 +1,5 @@
+import { gunzipSync } from "zlib";
+
 const AWS = require("aws-sdk");
 
 AWS.config.update({
@@ -77,11 +79,11 @@ export class DDBHelper {
         ":pk": primaryKeyValue,
       };
 
-      if (secondaryKeyValue) {
-        expression += ` AND #s <> :sk`;
-        attributeNames["#s"] = SecondaryKeyName;
-        attributeValues[":sk"] = secondaryKeyValue;
-      }
+      // if (secondaryKeyValue) {
+      //   expression += ` AND #s <> :sk`;
+      //   attributeNames["#s"] = SecondaryKeyName;
+      //   attributeValues[":sk"] = secondaryKeyValue;
+      // }
 
       updateParams["ExpressionAttributeNames"] = attributeNames;
       updateParams["ConditionExpression"] = expression;
@@ -89,6 +91,7 @@ export class DDBHelper {
     }
 
     try {
+      console.log("create params", updateParams);
       await docClient.put(updateParams).promise();
       return true;
     } catch (ex) {
@@ -238,7 +241,9 @@ export class DDBHelper {
     try {
       const resp = await docClient.get(getParams).promise();
       if (resp && resp.Item) {
-        return resp.Item;
+        const content = gunzipSync(resp.Item.Doc).toString();
+        return { ...resp.item, Doc: content };
+        // return {..resp.Item;
       }
       return undefined;
     } catch (ex) {
@@ -265,6 +270,36 @@ export class DDBHelper {
     return undefined;
   }
 
+  async updateItemAttributeV2(
+    primaryKeyValue: string,
+    attributeName: string,
+    value: any
+  ): Promise<any | undefined> {
+    const { TABLE_NAME, docClient } = this;
+    const UpdateExpression = `SET ${attributeName} = :details`;
+
+    const updateParams = {
+      TableName: TABLE_NAME,
+      Key: this.generateLookupKey(primaryKeyValue),
+      UpdateExpression,
+      ExpressionAttributeValues: {
+        ":details": value,
+      },
+      ReturnValues: "ALL_NEW",
+    };
+
+    try {
+      const resp = await docClient.update(updateParams).promise();
+      if (resp && resp.Attributes) {
+        return resp.Attributes;
+      }
+      return undefined;
+    } catch (ex) {
+      console.log("Updating Item Failed");
+      console.log(ex);
+      return undefined;
+    }
+  }
   /**
    * Use to set a sub property on an item
    * */
