@@ -1,17 +1,16 @@
-# The manifest for the "doc-engine" service.
+# The manifest for the "api" service.
 # Read the full specification for the "Load Balanced Web Service" type at:
 #  https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/
 
 # Your service name will be used in naming your resources like log groups, ECS services, etc.
-name: doc-engine
+name: api
 type: Load Balanced Web Service
 
 # Distribute traffic to your service.
 http:
   # Requests to this path will be forwarded to your service.
   # To match all requests you can use the "/" path.
-  path: "doc-engine"
-  alias: "getnugget.io"
+  path: 'api'
   # You can specify a custom health check path. The default is "/".
   # healthcheck: '/'
 
@@ -22,25 +21,17 @@ image:
   # Port exposed through your container to route traffic to it.
   port: 5000
 
-cpu: 1024 # Number of CPU units for the task.
-memory: 2048 # Amount of memory in MiB used by the task.
-platform: linux/x86_64 # See https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/#platform
-count: 1 # Number of tasks that should be running in your service.
-exec: true # Enable running commands in your container.
+cpu: 256       # Number of CPU units for the task.
+memory: 512    # Amount of memory in MiB used by the task.
+platform: linux/x86_64  # See https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/#platform
+count: 1       # Number of tasks that should be running in your service.
+exec: true     # Enable running commands in your container.
 
 # Optional fields for more advanced use-cases.
 #
-variables:
-  REDIS_HOST: ydo-re-1m2vmcv4x8s62.kno3tg.0001.use2.cache.amazonaws.com
-  REDIS_PORT: 6379
+#variables:                    # Pass environment variables as key value pairs.
+#  LOG_LEVEL: info
 
-secrets: # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
-  MONGODB_URI:
-    secretsmanager: "nugget/collab:MONGODB_URI::"
-  COGNITO_USERPOOL_ID:
-    secretsmanager: "nugget/collab:COGNITO_USERPOOL_ID::"
-  COGNITO_CLIENTID:
-    secretsmanager: "nugget/collab:COGNITO_CLIENTID::"
 #secrets:                      # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
 #  GITHUB_TOKEN: GITHUB_TOKEN  # The key is the name of the environment variable, the value is the name of the SSM parameter.
 
@@ -48,7 +39,3 @@ secrets: # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
 #environments:
 #  test:
 #    count: 2               # Number of tasks to run for the "test" environment.
-
-environments:
-  prod:
-    count: 1

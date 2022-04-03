@@ -32,6 +32,14 @@ exec: true # Enable running commands in your container.
 variables:
   REDIS_HOST: ydo-re-1m2vmcv4x8s62.kno3tg.0001.use2.cache.amazonaws.com
   REDIS_PORT: 6379
+
+secrets: # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
+  MONGODB_URI:
+    secretsmanager: "nugget/collab:MONGODB_URI::"
+  COGNITO_USERPOOL_ID:
+    secretsmanager: "nugget/collab:COGNITO_USERPOOL_ID::"
+  COGNITO_CLIENTID:
+    secretsmanager: "nugget/collab:COGNITO_CLIENTID::"
 #secrets:                      # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
 #  GITHUB_TOKEN: GITHUB_TOKEN  # The key is the name of the environment variable, the value is the name of the SSM parameter.
 
