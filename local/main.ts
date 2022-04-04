@@ -27,8 +27,6 @@ const initConnection = async () => {
     // Establish and verify connection
     await client.db(DATABASE).command({ ping: 1 });
     db = client.db(DATABASE);
-    if (!db.collection("documents").exists())
-      await db.createCollection("documents");
     console.log("Connected successfully to mongodb");
   } finally {
     // Ensures that the client will close when you finish/error
@@ -99,7 +97,7 @@ const startServer = async () => {
         data.connection.readOnly = false;
       } catch (error) {
         data.connection.isAuthenticated = false;
-        data.connection.readOnly = true;
+        data.connection.readOnly = false;
       }
     },
   });
