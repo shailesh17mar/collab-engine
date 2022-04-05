@@ -28,7 +28,8 @@ count: 1 # Number of tasks that should be running in your service.
 exec: true # Enable running commands in your container.
 
 variables:
-  REDIS_HOST: nugget-cache.kno3tg.ng.0001.use2.cache.amazonaws.com
+  REDIS_HOST: nug-re-11tqzasz2s7i9.kno3tg.0001.use2.cache.amazonaws.com
+  DATABASE: nuggetsdb
   REDIS_PORT: 6379
 
 secrets: # Pass secrets from AWS Systems Manager (SSM) Parameter Store.

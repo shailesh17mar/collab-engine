@@ -11,6 +11,7 @@ const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, {
   tlsCAFile: `rds-combined-ca-bundle.pem`,
   tls: true,
+  retryWrites: false,
 });
 const verifier = CognitoJwtVerifier.create({
   userPoolId: process.env.COGNITO_USERPOOL_ID,
@@ -56,8 +57,8 @@ const startServer = async () => {
             const document = await documentsCollection.findOne({
               documentName,
             });
-            // if (!document) return null;
-            const updates = document.updates.map(
+            const updatesField = document ? document.updates : [];
+            const updates = updatesField.map(
               (update) => update.buffer
             ) as Uint8Array[];
             return mergeUpdates(updates);
