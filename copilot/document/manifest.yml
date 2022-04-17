@@ -31,6 +31,7 @@ variables:
   REDIS_HOST: nug-re-11tqzasz2s7i9.kno3tg.0001.use2.cache.amazonaws.com
   DATABASE: nuggetsdb
   REDIS_PORT: 6379
+  ENV: prod
 
 secrets: # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
   MONGODB_URI:

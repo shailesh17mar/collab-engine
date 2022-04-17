@@ -5,6 +5,7 @@ RUN mkdir -p /app/node_modules && chown -R node:node /app
 WORKDIR /app
 COPY package*.json ./
 COPY tsconfig*.json ./
+COPY .env ./
 COPY *.pem ./
 COPY yarn.lock ./
 # RUN npm install -g yarn
@@ -27,6 +28,7 @@ COPY package*.json ./
 COPY yarn.lock ./
 COPY tsconfig*.json ./
 COPY *.pem ./
+COPY .env ./
 USER node
 RUN yarn install 
 COPY --from=builder /app/lib ./lib

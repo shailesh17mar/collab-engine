@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { Server, storePayload } from "@hocuspocus/server";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { Logger } from "@hocuspocus/extension-logger";
@@ -6,13 +7,16 @@ import { Database } from "@hocuspocus/extension-database";
 import { MongoClient, ObjectId } from "mongodb";
 import { mergeUpdates } from "yjs";
 
-// const uri = "mongodb://mongo:27017/dev";
+console.log("env", process.env);
 const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri, {
-  tlsCAFile: `rds-combined-ca-bundle.pem`,
-  tls: true,
-  retryWrites: false,
-});
+const isProd = process.env.ENV === "prod";
+const client = isProd
+  ? new MongoClient(uri, {
+      tlsCAFile: `rds-combined-ca-bundle.pem`,
+      tls: true,
+      retryWrites: false,
+    })
+  : new MongoClient(uri);
 const verifier = CognitoJwtVerifier.create({
   userPoolId: process.env.COGNITO_USERPOOL_ID,
   tokenUse: "access",
@@ -77,13 +81,20 @@ const startServer = async () => {
                 documentName,
                 updates: [state],
               });
-            else
+            else {
+              const updatesField = document ? document.updates : [];
+              const existingUpdates = updatesField.map(
+                (update) => update.buffer
+              ) as Uint8Array[];
+              const updates = mergeUpdates([...existingUpdates, state]);
               documentsCollection.updateOne(
                 { documentName },
                 {
-                  $push: { updates: state },
+                  // $push: { updates: state },
+                  $set: { updates: [updates] },
                 }
               );
+            }
           } catch (error) {
             throw error;
           }

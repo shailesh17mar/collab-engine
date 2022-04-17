@@ -25,7 +25,8 @@
     "source-map-support": "^0.5.21",
     "ws": "^8.5.0",
     "y-protocols": "^1.0.5",
-    "yjs": "^13.5.33"
+    "yjs": "^13.5.33",
+    "dotenv": "^16.0.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.93",
